@@ -282,3 +282,4 @@ Backup'ga quyidagilar kiradi:
 
 Frappe'ning o'z lokal backup'lari (`sites/*/private/backups`) bu tizimga bog'liq emas va o'zgarmaydi.
 # frappe-backup
+# frappe-backup
