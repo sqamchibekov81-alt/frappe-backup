@@ -237,6 +237,7 @@ Backup faqat undan tiklab ko'rilgandagina ishonchli. Oyiga bir marta `restore.sh
 | Bosqich `bench backup` da xato | Logni ko'ring: MariaDB ishlayaptimi (`systemctl status mariadb`), disk to'lmaganmi (`df -h`) |
 | Telegram xabari kelmaydi | User botga `/start` yozganmi? `backup.sh --test-notify` natijasini o'qing |
 | `Permission denied (publickey)` | Hetzner Console'da sub-account uchun SSH support va External reachability yoqilganmi? So'ng `install.sh` ni qayta ishga tushiring |
+| `install.sh` 1-qadamda `curl: (22) ... 503` yoki "GitHub vaqtincha ishlamayapti" | GitHub login qilmagan so'rovlarni vaqtincha cheklayapti ([githubstatus.com](https://www.githubstatus.com)). Kuting yoki GitHub token bilan ishga tushiring: `read -rs GITHUB_TOKEN && export GITHUB_TOKEN && bash install.sh; unset GITHUB_TOKEN` (token paste qilinganda ko'rinmaydi; huquqsiz fine-grained token yetadi) |
 
 restic buyruqlarini qo'lda ishlatish uchun root'da:
 

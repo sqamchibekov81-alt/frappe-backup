@@ -6,6 +6,9 @@
 #   backup.sh --test-notify  — Telegram'ga test xabar yuboradi va chiqadi
 set -Eeuo pipefail
 
+# systemd service'da HOME bo'lmaydi, restic esa kesh papkasini ($HOME/.cache/restic) shu orqali topadi
+export HOME="${HOME:-/root}"
+
 ENV_FILE="${FRAPPE_BACKUP_ENV:-/etc/frappe-backup.env}"
 LOG_FILE="/var/log/frappe-backup.log"
 LOCK_FILE="/run/frappe-backup.lock"

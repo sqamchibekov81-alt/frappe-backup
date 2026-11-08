@@ -7,6 +7,8 @@
 #   restore.sh <snapshot-id> [papka]
 set -Eeuo pipefail
 
+export HOME="${HOME:-/root}"
+
 ENV_FILE="${FRAPPE_BACKUP_ENV:-/etc/frappe-backup.env}"
 # shellcheck source=/dev/null
 source "$ENV_FILE"

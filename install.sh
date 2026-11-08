@@ -16,21 +16,28 @@ die() {
 
 # restic release faylini yuklaydi: avval oddiy havola, ishlamasa GitHub API orqali.
 # curl --retry 503/504 va timeout'larda o'zi qayta urinadi. Checksum keyin baribir tekshiriladi.
+# GitHub login qilmaganlarni cheklab qo'ysa: GITHUB_TOKEN berilsa, so'rovlar token bilan API orqali ketadi.
 fetch_release_file() {
 	local name="$1" out="$2" id
 	local tag="v${RESTIC_VERSION}"
-	if curl -fsSL --retry 5 --retry-delay 10 --max-time 300 -o "$out" \
+	local auth=()
+	local fail_msg="GitHub vaqtincha ishlamayapti. 10-15 daqiqadan keyin qayta urining yoki GITHUB_TOKEN bilan ishga tushiring (README, 'Muammolar')"
+	if [ -n "${GITHUB_TOKEN:-}" ]; then
+		auth=(-H "Authorization: Bearer ${GITHUB_TOKEN}")
+	elif curl -fsSL --retry 5 --retry-delay 10 --max-time 300 -o "$out" \
 		"https://github.com/restic/restic/releases/download/${tag}/${name}"; then
 		return 0
+	else
+		echo "github.com'dan yuklab bo'lmadi, GitHub API orqali urinib ko'raman: $name"
 	fi
-	echo "github.com'dan yuklab bo'lmadi, GitHub API orqali urinib ko'raman: $name"
-	id="$(curl -fsSL --retry 5 --retry-delay 10 --max-time 60 \
+	id="$(curl -fsSL --retry 5 --retry-delay 10 --max-time 60 ${auth[@]+"${auth[@]}"} \
 		"https://api.github.com/repos/restic/restic/releases/tags/${tag}" |
 		python3 -c 'import json,sys; print(next(a["id"] for a in json.load(sys.stdin)["assets"] if a["name"] == sys.argv[1]))' "$name")" ||
-		die "GitHub vaqtincha ishlamayapti. 10-15 daqiqadan keyin install.sh ni qayta ishga tushiring"
-	curl -fsSL --retry 5 --retry-delay 10 --max-time 300 -H "Accept: application/octet-stream" -o "$out" \
+		die "$fail_msg"
+	curl -fsSL --retry 5 --retry-delay 10 --max-time 300 ${auth[@]+"${auth[@]}"} \
+		-H "Accept: application/octet-stream" -o "$out" \
 		"https://api.github.com/repos/restic/restic/releases/assets/${id}" ||
-		die "GitHub vaqtincha ishlamayapti. 10-15 daqiqadan keyin install.sh ni qayta ishga tushiring"
+		die "$fail_msg"
 }
 
 [ "$(id -u)" = 0 ] || die "root nomidan ishga tushiring"

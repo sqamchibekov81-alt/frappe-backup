@@ -1,3 +1,4 @@
 # Haqiqiy sozlama fayli (token, login) repo'ga tushmasin
 *.env
 .restic-password
+.DS_Store
