@@ -1,0 +1,14 @@
+[Unit]
+Description=Frappe bench backup -> Hetzner Storage Box (restic)
+Wants=network-online.target
+After=network-online.target mariadb.service
+
+[Service]
+Type=oneshot
+# install.sh /opt/frappe-backup ni repo turgan haqiqiy yo'lga almashtiradi
+ExecStart=/opt/frappe-backup/backup.sh
+# Ish soatiga to'g'ri kelib qolsa ham saytni sekinlashtirmasin
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+TimeoutStartSec=6h

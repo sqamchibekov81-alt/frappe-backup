@@ -1,0 +1,13 @@
+[Unit]
+Description=Frappe backup har kecha 01:00-02:00 (Toshkent vaqti)
+
+[Timer]
+# Server soat mintaqasi UTC bo'lsa ham Toshkent vaqti bo'yicha ishlaydi
+OnCalendar=*-*-* 01:00:00 Asia/Tashkent
+# 10 ta server Storage Box'ga bir vaqtda urilmasligi uchun 0-60 daqiqa tasodifiy kechikish
+RandomizedDelaySec=1h
+# Server o'chiq bo'lib o'tkazib yuborilgan backup keyingi yoqilishda bajariladi
+Persistent=true
+
+[Install]
+WantedBy=timers.target
