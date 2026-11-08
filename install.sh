@@ -14,6 +14,25 @@ die() {
 	exit 1
 }
 
+# restic release faylini yuklaydi: avval oddiy havola, ishlamasa GitHub API orqali.
+# curl --retry 503/504 va timeout'larda o'zi qayta urinadi. Checksum keyin baribir tekshiriladi.
+fetch_release_file() {
+	local name="$1" out="$2" id
+	local tag="v${RESTIC_VERSION}"
+	if curl -fsSL --retry 5 --retry-delay 10 --max-time 300 -o "$out" \
+		"https://github.com/restic/restic/releases/download/${tag}/${name}"; then
+		return 0
+	fi
+	echo "github.com'dan yuklab bo'lmadi, GitHub API orqali urinib ko'raman: $name"
+	id="$(curl -fsSL --retry 5 --retry-delay 10 --max-time 60 \
+		"https://api.github.com/repos/restic/restic/releases/tags/${tag}" |
+		python3 -c 'import json,sys; print(next(a["id"] for a in json.load(sys.stdin)["assets"] if a["name"] == sys.argv[1]))' "$name")" ||
+		die "GitHub vaqtincha ishlamayapti. 10-15 daqiqadan keyin install.sh ni qayta ishga tushiring"
+	curl -fsSL --retry 5 --retry-delay 10 --max-time 300 -H "Accept: application/octet-stream" -o "$out" \
+		"https://api.github.com/repos/restic/restic/releases/assets/${id}" ||
+		die "GitHub vaqtincha ishlamayapti. 10-15 daqiqadan keyin install.sh ni qayta ishga tushiring"
+}
+
 [ "$(id -u)" = 0 ] || die "root nomidan ishga tushiring"
 [ -f "$ENV_FILE" ] || die "$ENV_FILE yo'q. Avval: cp $REPO_DIR/frappe-backup.env.example $ENV_FILE va to'ldiring"
 chown root:root "$ENV_FILE"
@@ -32,6 +51,7 @@ id "$BENCH_USER" >/dev/null 2>&1 || die "BENCH_USER topilmadi: $BENCH_USER"
 export RESTIC_REPOSITORY RESTIC_PASSWORD_FILE
 
 echo "== 1/6 Paketlar va restic $RESTIC_VERSION"
+echo "apt paketlari yangilanyapti, 1-2 daqiqa jim turishi mumkin. Hech narsa kiritmang, parol 4-qadamda so'raladi."
 apt-get update -qq
 apt-get install -y -qq curl bzip2 openssh-client util-linux >/dev/null
 if [[ "$(/usr/local/bin/restic version 2>/dev/null || true)" != "restic $RESTIC_VERSION "* ]]; then
@@ -40,11 +60,11 @@ if [[ "$(/usr/local/bin/restic version 2>/dev/null || true)" != "restic $RESTIC_
 		arm64) arch=arm64 ;;
 		*) die "Arxitektura qo'llab-quvvatlanmaydi: $(dpkg --print-architecture)" ;;
 	esac
+	echo "restic GitHub'dan yuklanyapti..."
 	tmp="$(mktemp -d)"
-	base="https://github.com/restic/restic/releases/download/v${RESTIC_VERSION}"
 	file="restic_${RESTIC_VERSION}_linux_${arch}.bz2"
-	curl -fsSL -o "$tmp/$file" "$base/$file"
-	curl -fsSL -o "$tmp/SHA256SUMS" "$base/SHA256SUMS"
+	fetch_release_file "$file" "$tmp/$file"
+	fetch_release_file SHA256SUMS "$tmp/SHA256SUMS"
 	(cd "$tmp" && grep " $file\$" SHA256SUMS | sha256sum -c -) || die "restic checksum mos kelmadi"
 	bunzip2 -c "$tmp/$file" >/usr/local/bin/restic
 	chmod 755 /usr/local/bin/restic
